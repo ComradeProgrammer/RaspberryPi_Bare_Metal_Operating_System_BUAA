@@ -7,11 +7,12 @@ vmlinux_elf   := kernel.elf
 vmlinux_img   := kernel8.img
 link_script   := kernel.lds
 
-modules       := boot drivers init lib
+modules       := boot drivers init lib mm
 objects       := $(boot_dir)/*.o \
                  $(init_dir)/*.o \
                  $(drivers_dir)/rpi3/*.o \
-                 $(lib_dir)/*.o
+                 $(lib_dir)/*.o \
+				 $(mm_dir)/*.o 
 
 .PHONY: all $(modules) clean debug run
 

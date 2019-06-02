@@ -1,4 +1,5 @@
-INCLUDES := -I./ -I../ -I../include/
+INCLUDES	:= -I./ -I../ -I../include/
+
 %.o: %.c
 	$(CC) $(CFLAGS) $(INCLUDES) -c $<
 
@@ -7,9 +8,10 @@ INCLUDES := -I./ -I../ -I../include/
 
 .PHONY: clean
 
-all: print.o printf.o helpfunct.o env.o
+all: pmap.o tlb_asm.o
 
 clean:
 	rm -rf *~ *.o
+
 
 include ../include.mk
