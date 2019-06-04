@@ -50,8 +50,9 @@
 extern char _end[]; 
 extern char _start[];
 extern char _pg_dir[]; 
-#define assert(x)	\
-	do {	if (!(x)) panic("assertion failed: %s", #x); } while (0)
+extern void enable_mmu();
+extern void  boot_mmu_setup();
+
 #define UPAGES 0x80000000
 #define UENVS 0x81000000
 #endif

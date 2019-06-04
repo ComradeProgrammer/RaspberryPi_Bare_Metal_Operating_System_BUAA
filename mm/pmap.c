@@ -274,5 +274,6 @@ void page_check(){
     assert(page_insert(_pg_dir, pp0, 0x71000000, 0) < 0);
 
     assert(page_insert(_pg_dir, pp1, 0x70000000+BY2PG, 0) == 0);
+    page_free_list=fl;
     
 }

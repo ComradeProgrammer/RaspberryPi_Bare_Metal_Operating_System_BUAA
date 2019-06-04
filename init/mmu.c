@@ -1,6 +1,6 @@
 #include<mmu.h>
-#include<printf.h>
 
+#include<printf.h>
 extern volatile unsigned char _data[];
 unsigned long freemem;
 void boot_mmu_setup(){
@@ -37,6 +37,13 @@ void boot_mmu_setup(){
     for(r=(0x3f000000>>21);r<512;r++){
         pmd[r]=((r<<21)|TYPE_BLOCK|PTE_AF|PTE_USER|PTE_DEVICE);
     }
+    //from the fucking interrupt controller,i know that we must map the next block of the 0x40000000,to trigger the interrupt.
+    //Son of bitch The former computer organization teacher assisstant LIU KANGXV!HOW dare this bitch push his FAKE raspi3 code ,which is FULL OF MISTAKES and not RUNNABLE,to the github??Bastard!
+    pud[PUDX(0x40000000)]=(freemem|TYPE_PAGE|PTE_AF|PTE_USER|PTE_ISH|PTE_NORMAL );
+    pmd=(unsigned long*)freemem;
+    freemem+=BY2PG;
+    r=(0x40000000>>21);
+    pmd[0]=((r<<21)|TYPE_BLOCK|PTE_AF|PTE_USER|PTE_DEVICE);
     printf(">>>Lower half page tables for EL1 generated!\n");
     printf(">>>test:current fremem:%x\n",freemem);
     return;
