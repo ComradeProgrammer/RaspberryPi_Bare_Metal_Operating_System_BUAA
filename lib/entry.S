@@ -1,5 +1,13 @@
 #include<entry.h>
 
+.macro CLI
+	msr	daifset, #2//close interrupt
+.endm
+
+.macro STI 
+	msr    daifclr, #2//open interrupt
+.endm
+
 .macro handler label
 .align 7
 b \label
@@ -43,10 +51,11 @@ b \label
 	ldp	x28, x29, [sp, #16 * 14]
 	ldr	x30, [sp, #16 * 15] 
 	add	sp, sp, 256		
-	eret
 .endm
 
+
 .macro unimplement_entry type
+CLI
 saveall
 mov x0,#\type
 mrs x1,esr_el1
@@ -56,6 +65,7 @@ bl unimplement_handler
 //exception vectors
 .align 11
 .global vectors
+
 vectors:
     handler	sync_invalid_el1t			// Synchronous EL1t
 	handler	irq_invalid_el1t			// IRQ EL1t
@@ -123,10 +133,13 @@ error_invalid_el0_32:
 	unimplement_entry  ERROR_INVALID_EL0_32
 
 el1_irq:
+	CLI
 	saveall
 	bl	handle_irq
 	restore
-	
+	STI
+	eret
+
 .globl irq_vector_init
 .extern vectors
 irq_vector_init:
