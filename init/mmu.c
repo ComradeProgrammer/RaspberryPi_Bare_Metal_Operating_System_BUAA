@@ -45,7 +45,7 @@ void boot_mmu_setup(){
     r=(0x40000000>>21);
     pmd[0]=((r<<21)|TYPE_BLOCK|PTE_AF|PTE_USER|PTE_DEVICE);
     printf(">>>Lower half page tables for EL1 generated!\n");
-    printf(">>>test:current fremem:%x\n",freemem);
+    printf(">>>test:current freemem:%x\n",freemem);
     return;
 }
 

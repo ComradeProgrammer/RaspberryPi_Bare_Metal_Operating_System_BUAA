@@ -55,4 +55,40 @@ extern void  boot_mmu_setup();
 
 #define UPAGES 0x80000000
 #define UENVS 0x81000000
+#define TIMESTACK 0x82000000
+#define KERNEL_SP 0x82000000-BY2PG
+//now we need to configure the memory map(kernel)
+/*
+|	-----------------------------------0x82000000
+|	TIMESTACK  			BY2PG
+|	-----------------------------------0x82000000-BY2PG
+|	KERNEL_SP 			BY2PG			
+|	-----------------------------------0X82000000-2*BY2PG
+|	struct envs
+|	-----------------------------------0x81000000 UENVS
+|	struct pages
+|	------------------------------------0x80000000 UPAGES
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_------------------------------------0x40000000+2M
+|
+|	DEVICE ADDR
+|	---------------------------------0x3f000000
+|
+|	free physical page to alloc
+|
+D	-----------------------------------freemem
+I
+R	kernel page middle directory,page tables
+E
+C	--------------------------------
+T	kernel page upper directory   4K
+	----------------------------------_end,_pg_dir
+M
+A	kernel text
+P
+|	----------------------------------0x80000
+|	kernel stack
+|
+_	----------------------------------0x0	
+*/
 #endif

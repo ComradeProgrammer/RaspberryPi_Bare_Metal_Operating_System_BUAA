@@ -7,7 +7,7 @@ INCLUDES := -I./ -I../ -I../include/
 
 .PHONY: clean
 
-all: print.o printf.o helpfunct.o env.o entry.o handleirq.o irq.o unimplement.o timer.o
+all: print.o printf.o helpfunct.o env.o entry.o handleirq.o irq.o unimplement.o sched.o timer.o
 
 clean:
 	rm -rf *~ *.o

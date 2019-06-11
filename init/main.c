@@ -24,7 +24,8 @@ void main() {
     timer_init();
     printf(">>>timer interrupt started!\n");  
     //========TEST===========================
-  
+    env_init();
+    env_check();
     //page_check();
     //========HALT==================================
     

@@ -79,6 +79,7 @@ void boot_map_segment(unsigned long* pud,unsigned long va,unsigned long size,
 void aarch64_vm_init(){
     unsigned long n;
     extern unsigned long freemem;
+    unsigned long*  timestack,kernel_sp;
     printf("to memory %x for struct page directory.\n", _pg_dir);
 
     pages=(struct Page*)alloc(npage*sizeof(struct Page),BY2PG,1);
@@ -88,9 +89,20 @@ void aarch64_vm_init(){
     boot_map_segment((unsigned long*)_pg_dir,UPAGES,n,(unsigned long)pages,PTE_V);
 
     envs=(struct Env*)alloc(NENV*sizeof(struct Env),BY2PG,1);
+    printf("to memory %x for struct Envs.\n", freemem);
     n=ROUND(NENV*sizeof(struct Env),BY2PG);
+    
     boot_map_segment((unsigned long*)_pg_dir,UENVS,n,(unsigned long)envs,PTE_V);
     //printf("nenvs:%x,size:%x\n",NENV,n);
+
+    timestack=(unsigned long*)alloc(BY2PG,BY2PG,1);
+    printf("to memory %x for TIMESTACK.\n", freemem);
+    boot_map_segment((unsigned long*)_pg_dir,TIMESTACK-BY2PG,BY2PG,(unsigned long)timestack,PTE_V);
+
+    kernel_sp=(unsigned long*)alloc(BY2PG,BY2PG,1);
+    printf("to memory %x for KERNEL SP.\n", freemem);
+    boot_map_segment((unsigned long*)_pg_dir,KERNEL_SP-BY2PG,BY2PG,(unsigned long)kernel_sp,PTE_V);
+
     printf("aarch64_vm_init:boot_pgdir is %x\n",_pg_dir);
     printf("pmap.c:\t ArmV8 vm init success\n");
 }
