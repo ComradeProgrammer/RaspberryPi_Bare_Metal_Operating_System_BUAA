@@ -4,8 +4,10 @@
 #include<timerandirq.h>
 #include<helpfunct.h>
 #include<uart.h>
+#include<trapframe.h>
 extern void printel();
-
+extern void user_maina();
+extern void user_mainb();
 void main() {
     unsigned long* tmp;
     printf(">>>main.c:\tmain is start ...>>>\n");
@@ -19,13 +21,19 @@ void main() {
     aarch64_vm_init();
     page_init();
     irq_vector_init();
+    env_init();
+
+    env_create(&(user_maina),0,1);
+     env_create(&(user_mainb),0,1);
+
+
     enable_irq();
     enable_interrupt_controller();
     timer_init();
     printf(">>>timer interrupt started!\n");  
     //========TEST===========================
-    env_init();
-    env_check();
+   
+    
     //page_check();
     //========HALT==================================
     

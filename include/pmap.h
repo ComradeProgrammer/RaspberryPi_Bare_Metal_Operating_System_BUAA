@@ -2,7 +2,7 @@
 #define _PMAP_H_
 #include<mmu.h>
 #include<queue.h>
-
+#include<printf.h>
 
 
 LIST_HEAD(Page_list, Page);

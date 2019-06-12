@@ -1,3 +1,4 @@
+#include<uart.h>
 void bcopy(const void *src, void *dst, unsigned long len)
 {
 	void *max;
@@ -41,4 +42,14 @@ void bzero(void *b, unsigned long len)
 		*(char *)b++ = 0;
 	}		
 	
+}
+void user_maina(){
+    while(1){
+        uart_send_boot('1');
+    }
+}
+void user_mainb(){
+    while(1){
+        uart_send_boot('2');
+    }
 }

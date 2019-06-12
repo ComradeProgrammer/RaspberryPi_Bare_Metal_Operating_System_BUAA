@@ -11,6 +11,7 @@ enable_mmu:
 
     ldr x0, =0x440488
     msr mair_el1,x0
+    //msr mair_el0,x0
 
     ldr	x0, =(TCR_VALUE)		
 	msr	tcr_el1, x0

@@ -110,7 +110,14 @@ env_setup_vm(struct Env *e)
 	/*for (i = PDX(UTOP); i <= PDX(~0); i++) {
 		pgdir[i] = boot_pgdir[i];
 	}*/
-	e->env_pgdir = pgdir;
+	
+	
+	//e->env_pgdir = pgdir;
+	e->env_pgdir = _pg_dir;
+
+
+
+
 	//e->env_cr3   = PADDR(pgdir);
 
     /*Step 4: VPT and UVPT map the env's own page table, with
@@ -249,7 +256,7 @@ load_icode(struct Env *e, unsigned char *binary, unsigned int size)
 		return;
 	}
     /*Step 3:load the binary by using elf loader. */
-	r=load_elf(binary,size,&entry_point,e,load_icode_mapper);//--------------
+//	r=load_elf(binary,size,&entry_point,e,load_icode_mapper);//--------------
 	if(r<0){
 		printf("fuck,load_icode: load_elf failed\n");
 		return;	
@@ -259,24 +266,39 @@ load_icode(struct Env *e, unsigned char *binary, unsigned int size)
 	e->env_tf.pc = entry_point;
 	return;
  }
+ extern void user_main();
  void
 env_create_priority(unsigned char *binary, int size, int priority)
 {
         struct Env *e;
 	int r;
-	extern void debug();
     /*Step 1: Use env_alloc to alloc a new env. */
 	r=env_alloc(&e,0);
 	if(r<0){
 		panic("fuck,env_create_priority:env_alloc failed");
 		return;
 	}
+	struct Page *p = NULL;
+	r=page_alloc(&p);
+	p->pp_ref++;
+	if(r<0){
+		printf("env_create:page_alloc failed\n");
+		return;
+	}	
+	r=page_insert(e->env_pgdir,p,USTACKTOP-BY2PG,PTE_V);
     /*Step 2: assign priority to the new env. */
 	e->env_pri=priority;
     /*Step 3: Use load_icode() to load the named elf binary. */
-	load_icode(e,binary,size);//----------------
+	//load_icode(e,binary,size);//----------------
+	e->env_tf.pc=(unsigned long*)binary;
+	e->env_tf.sp=USTACKTOP;
+	
+	//printf("loading at %x\n",&(e->env_tf.pc));
+	//printf("e->env_tf.pc%x\n",e->env_tf.pc);
+
+
+LIST_INSERT_HEAD(&(env_sched_list[cur_sched]),e,env_sched_link);
 //	printf("creating\n");	
-	LIST_INSERT_HEAD(&(env_sched_list[cur_sched]),e,env_sched_link);
 //	printf("createing %x\n",e->env_id);
 	//	debug();
 }
@@ -292,7 +314,7 @@ env_create(unsigned char *binary, int size)
 {
 	env_create_priority(binary,size,1);
 }
-extern void env_pop_tf(struct Trapframe *tf, int id);
+extern void env_pop_tf(struct Trapframe *tf,unsigned long* pgdir);
 //extern void lcontext(unsigned int contxt);
 void
 env_run(struct Env *e)
@@ -303,7 +325,7 @@ env_run(struct Env *e)
     *  context switch.You can imitate env_destroy() 's behaviors.*/
 	if(curenv!=NULL){
 		bcopy((void*)old,(void*)(&(curenv->env_tf)),sizeof(struct Trapframe));
-		curenv->env_tf.pc=old->elr_el0;
+		curenv->env_tf.pc=old->elr_el1;
 	}
 
     /*Step 2: Set 'curenv' to the new environment. */
@@ -316,7 +338,8 @@ env_run(struct Env *e)
      * the   environment.
      */
     /* Hint: You should use GET_ENV_ASID there.Think why? */
-	env_pop_tf(&(curenv->env_tf),GET_ENV_ASID(curenv->env_id));//---------
+	//printf("curenv:%x;argument1:%x\n",curenv,&(curenv->env_tf));
+	env_pop_tf(&(curenv->env_tf),curenv->env_pgdir);//---------
 
 }
 

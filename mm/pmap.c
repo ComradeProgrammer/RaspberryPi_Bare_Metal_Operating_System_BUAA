@@ -49,7 +49,7 @@ static unsigned long* boot_pgdir_walk(unsigned long* pud,unsigned long va,int cr
     if((((*pud_entryp)&(PTE_V))==0x0)){
         if(create){
             pmd= alloc(BY2PG,BY2PG,1);
-            *pud_entryp=(unsigned long)pmd|PTE_V;
+            *pud_entryp=(unsigned long)pmd|TYPE_PAGE|PTE_AF|PTE_USER|PTE_ISH|PTE_NORMAL;
         }
     }
     pmd_entryp=pmd+PMDX(va);
@@ -57,7 +57,7 @@ static unsigned long* boot_pgdir_walk(unsigned long* pud,unsigned long va,int cr
     if((((*pmd_entryp)&(PTE_V))==0x0)){
         if(create){
             pte= alloc(BY2PG,BY2PG,1);
-            *pmd_entryp=(unsigned long)pte|PTE_V;
+            *pmd_entryp=(unsigned long)pte|TYPE_PAGE|PTE_AF|PTE_USER|PTE_ISH|PTE_NORMAL;
         }
     }
     pte_entryp=pte+PTEX(va);
@@ -73,7 +73,7 @@ void boot_map_segment(unsigned long* pud,unsigned long va,unsigned long size,
         }
         for(i=0;i<size;i+=BY2PG){
             pte_entry=boot_pgdir_walk(pud,va+i,1);
-            *pte_entry=(pa+i)|perm|PTE_V;
+            *pte_entry=(pa+i)|perm|TYPE_PAGE|PTE_AF|PTE_USER|PTE_ISH|PTE_NORMAL;
         }
 }
 void aarch64_vm_init(){
@@ -159,7 +159,7 @@ int pgdir_walk(unsigned long *pud,unsigned long va,int create,unsigned long**ppt
             *ppte=NULL;
             return -E_NO_MEM;
         }
-        *pud_entryp=page2pa(ppage)|PTE_V;
+        *pud_entryp=page2pa(ppage)|TYPE_PAGE|PTE_AF|PTE_USER|PTE_ISH|PTE_NORMAL;
         pmd=(unsigned long*)(page2pa(ppage));
         ppage->pp_ref++;
     }
@@ -175,7 +175,7 @@ int pgdir_walk(unsigned long *pud,unsigned long va,int create,unsigned long**ppt
             *ppte=NULL;
             return -E_NO_MEM;
         }
-        *pmd_entryp=page2pa(ppage)|PTE_V;
+        *pmd_entryp=page2pa(ppage)|TYPE_PAGE|PTE_AF|PTE_USER|PTE_ISH|PTE_NORMAL;
         pte=(unsigned long*)(page2pa(ppage));
         ppage->pp_ref++;
     }
@@ -200,7 +200,7 @@ int page_insert(unsigned long* pud,struct Page*pp,unsigned long va,unsigned int 
         }
         else{
             tlb_invalidate();
-            *entry=(page2pa(pp)|PERM);
+            *entry=(page2pa(pp)|PERM|TYPE_PAGE|PTE_AF|PTE_USER|PTE_ISH|PTE_NORMAL);
             return 0;
         }
     }
@@ -209,7 +209,7 @@ int page_insert(unsigned long* pud,struct Page*pp,unsigned long va,unsigned int 
     if(status!=0){
         return -E_NO_MEM;
     }
-    *entry=(page2pa(pp)|PERM);
+    *entry=(page2pa(pp)|PERM|TYPE_PAGE|PTE_AF|PTE_USER|PTE_ISH|PTE_NORMAL);
     pp->pp_ref++;
     return 0;
 }

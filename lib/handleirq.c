@@ -1,6 +1,6 @@
 #include<entry.h>
 #include<printf.h>
-
+extern void sched_yield();
 void enable_interrupt_controller()
 {
 	// enable all kind of exception!
@@ -13,6 +13,8 @@ void enable_interrupt_controller()
 void handle_irq( void ) 
 {
 	//must reinitialize the timer
+	//printf("Timer interrupt received\n\r");
 	timer_init();
-	printf("Timer interrupt received\n\r");
+	
+	sched_yield();
 }
