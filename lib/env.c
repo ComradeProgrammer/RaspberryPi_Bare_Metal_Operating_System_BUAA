@@ -14,18 +14,17 @@ extern int remaining_time;
 unsigned long mkenvid(struct Env *e)
 {
 	static unsigned long next_env_id = 0;
-
     /*Hint: lower bits of envid hold e's position in the envs array. */
 	unsigned long idx = e - envs;
 
     /*Hint:  high bits of envid hold an increasing number. */
 	return (++next_env_id << (1 + LOG2NENV)) | idx;
 }
+
 int envid2env(unsigned long  envid, struct Env **penv, int checkperm)
 {
     struct Env *e;
-    /* Hint:
- *      *  If envid is zero, return the current environment.*/
+    /* Hint: If envid is zero, return the current environment.*/
     /*Step 1: Assign value to e using envid. */
 	if(envid==0){
 		*penv=curenv;
@@ -39,19 +38,14 @@ int envid2env(unsigned long  envid, struct Env **penv, int checkperm)
                 return -E_BAD_ENV;
         }
     /* Hint:
- *      *  Check that the calling environment has legitimate permissions
- *           *  to manipulate the specified environment.
- *                *  If checkperm is set, the specified environment
- *                     *  must be either the current environment.
- *                          *  or an immediate child of the current environment.If not, error! */
+	Check that the calling environment has legitimate permissions to manipulate the specified environment.
+	If checkperm is set, the specified environmentmust be either the current environment.or an immediate child of the current environment.If not, error! */
     /*Step 2: Make a check according to checkperm. */
 	if(checkperm){
-	//	printf("envid:%x, curenv:%x, parent:%x\n",envid,curenv->env_id,e->env_parent_id);
 		if(e!=curenv&&e->env_parent_id!=curenv->env_id){
 			*penv=0;
 			return -E_BAD_ENV;
 		}
-
 	}
         *penv = e;
         return 0;
@@ -96,34 +90,12 @@ env_setup_vm(struct Env *e)
 	}
 	p->pp_ref++;
 	pgdir = (unsigned long *)page2pa(p);
+	/*copy the kernel to the lower address space*/
+	for (i = 0; i < 512; i++) {
+		pgdir[i] = ((unsigned long*)_pg_dir)[i];
+	}
 
-    
-    /*Step 2: Zero pgdir's field before UTOP. */
-	/*for (i = 0; i < PDX(UTOP); i++) {
-		pgdir[i] = 0;
-	}*/
-    
-
-    /*Step 3: Copy kernel's boot_pgdir to pgdir. */
-// it seems that we don't need this  because aarch64 can switch pud automaticly
-   
-	/*for (i = PDX(UTOP); i <= PDX(~0); i++) {
-		pgdir[i] = boot_pgdir[i];
-	}*/
-	
-	
-	//e->env_pgdir = pgdir;
-	e->env_pgdir = _pg_dir;
-
-
-
-
-	//e->env_cr3   = PADDR(pgdir);
-
-    /*Step 4: VPT and UVPT map the env's own page table, with
-     *different permissions. */
-    /*e->env_pgdir[PDX(VPT)]   = e->env_cr3;
-    e->env_pgdir[PDX(UVPT)]  = e->env_cr3 | PTE_V | PTE_R;*/
+	e->env_pgdir = pgdir;
 	return 0;
 }
 int
@@ -137,9 +109,6 @@ env_alloc(struct Env **new, unsigned long parent_id)
 		printf("Sorry,alloc env failed!\n");
 		return -E_NO_FREE_ENV;
 	}
-    
-    /*Step 2: Call certain function(has been implemented) to init kernel memory layout for this new Env.
-     *The function mainly maps the kernel address to this new Env address. */
 	env_setup_vm(e);
 
     /*Step 3: Initialize every field of new Env with appropriate values*/
@@ -147,23 +116,138 @@ env_alloc(struct Env **new, unsigned long parent_id)
 	e->env_status = ENV_RUNNABLE;
 	e->env_runs = 0;
 	e->env_id = mkenvid(e);
-    /*Step 4: focus on initializing env_tf structure, located at this new Env. 
-     * especially the sp register,CPU status. */
-    //e->env_tf.cp0_status = 0x10001004;
+
 	e->env_tf.sp = USTACKTOP;
-	/*r=page_alloc(&pp);
-	if(r<0){
-		printf("allocing for stack error\n");
-	}
-	r=page_insert(e->env_pgdir,pp,USTACKTOP-BY2PG,PTE_V);
-	if(r<0){
-		printf("inserting for stack error\n");
-	}*/
-    /*Step 5: Remove the new Env from Env free list*/
 	
 	*new = e;
 	LIST_REMOVE(e,env_link);
 	return 0;
+}
+
+ extern void user_main();
+ void env_create_priority(unsigned char *binary, int size, int priority)
+{
+    struct Env *e;
+	int r;
+    /*Step 1: Use env_alloc to alloc a new env. */
+	r=env_alloc(&e,0);
+	if(r<0){
+		panic("fuck,env_create_priority:env_alloc failed");
+		return;
+	}
+	struct Page *p = NULL;
+	r=page_alloc(&p);
+	p->pp_ref++;
+	if(r<0){
+		printf("env_create:page_alloc failed\n");
+		return;
+	}	
+	r=page_insert(e->env_pgdir,p,USTACKTOP-BY2PG,PTE_V);
+    /*Step 2: assign priority to the new env. */
+	e->env_pri=priority;
+    /*Step 3: Use load_icode() to load the named elf binary. */
+	//load_icode(e,binary,size);//----------------
+	e->env_tf.pc=(unsigned long*)binary;
+	e->env_tf.sp=USTACKTOP;
+
+	LIST_INSERT_HEAD(&(env_sched_list[cur_sched]),e,env_sched_link);
+}
+/* Overview:
+ * Allocates a new env with default priority value.
+ * 
+ * Hints:
+ *  this function warp the env_create_priority function/
+ */
+
+void env_create(unsigned char *binary, int size)
+{
+	env_create_priority(binary,size,1);
+}
+
+extern void env_pop_tf(struct Trapframe *tf,unsigned long* pgdir);
+
+void env_run(struct Env *e)
+{
+	struct Trapframe *old=(struct Trapframe*)(TIMESTACK-sizeof(struct Trapframe));
+	/*Step 1: save register state of curenv. */
+    /* Hint: if there is a environment running,you should do
+    *  context switch.You can imitate env_destroy() 's behaviors.*/
+	if(curenv!=NULL){
+		bcopy((void*)old,(void*)(&(curenv->env_tf)),sizeof(struct Trapframe));
+		curenv->env_tf.pc=old->elr_el1;
+	}
+
+    /*Step 2: Set 'curenv' to the new environment. */
+	curenv=e;
+	curenv->env_runs++;
+    /*Step 3: Use lcontext() to switch to its address space. */
+	//lcontext((curenv->env_pgdir));
+    /*Step 4: Use env_pop_tf() to restore the environment's
+     * environment   registers and drop into user mode in the
+     * the   environment.
+     */
+
+	env_pop_tf(&(curenv->env_tf),curenv->env_pgdir);//---------
+
+}
+
+void env_check()
+{
+        struct Env *temp, *pe, *pe0, *pe1, *pe2;
+        struct Env_list fl;
+        int re = 0;
+ 	// should be able to allocate three envs
+	pe0 = 0;
+        pe1 = 0;
+        pe2 = 0;
+        assert(env_alloc(&pe0, 0) == 0);
+        assert(env_alloc(&pe1, 0) == 0);
+        assert(env_alloc(&pe2, 0) == 0);
+
+        assert(pe0);
+        assert(pe1 && pe1 != pe0);
+        assert(pe2 && pe2 != pe1 && pe2 != pe0);
+
+ 	// temporarily steal the rest of the free envs
+ 	fl = env_free_list;
+	// now this env_free list must be empty!!!!
+	LIST_INIT(&env_free_list);
+
+	// should be no free memory
+	 assert(env_alloc(&pe, 0) == -E_NO_FREE_ENV);
+
+	// recover env_free_list
+	env_free_list = fl;
+
+        printf("pe0->env_id %d\n",pe0->env_id);
+        printf("pe1->env_id %d\n",pe1->env_id);
+        printf("pe2->env_id %d\n",pe2->env_id);
+
+        assert(pe0->env_id == 2048);
+        assert(pe1->env_id == 4097);
+        assert(pe2->env_id == 6146);
+        printf("env_init() work well!\n");
+
+	 /* check envid2env work well */
+	 pe2->env_status = ENV_FREE;
+        re = envid2env(pe2->env_id, &pe, 0);
+
+        assert(pe == 0 && re == -E_BAD_ENV);
+
+        pe2->env_status = ENV_RUNNABLE;
+        re = envid2env(pe2->env_id, &pe, 0);
+
+        assert(pe->env_id == pe2->env_id &&re == 0);
+
+        temp = curenv;
+        curenv = pe0;
+        re = envid2env(pe2->env_id, &pe, 1);
+        assert(pe == 0 && re == -E_BAD_ENV);
+        curenv = temp;
+        printf("envid2env() work well!\n");
+
+	/* check env_setup_vm() work well */
+        printf("env_check() succeeded!\n");
 }
 
 static int load_icode_mapper(unsigned long va, unsigned int sgsize,
@@ -266,138 +350,3 @@ load_icode(struct Env *e, unsigned char *binary, unsigned int size)
 	e->env_tf.pc = entry_point;
 	return;
  }
- extern void user_main();
- void
-env_create_priority(unsigned char *binary, int size, int priority)
-{
-        struct Env *e;
-	int r;
-    /*Step 1: Use env_alloc to alloc a new env. */
-	r=env_alloc(&e,0);
-	if(r<0){
-		panic("fuck,env_create_priority:env_alloc failed");
-		return;
-	}
-	struct Page *p = NULL;
-	r=page_alloc(&p);
-	p->pp_ref++;
-	if(r<0){
-		printf("env_create:page_alloc failed\n");
-		return;
-	}	
-	r=page_insert(e->env_pgdir,p,USTACKTOP-BY2PG,PTE_V);
-    /*Step 2: assign priority to the new env. */
-	e->env_pri=priority;
-    /*Step 3: Use load_icode() to load the named elf binary. */
-	//load_icode(e,binary,size);//----------------
-	e->env_tf.pc=(unsigned long*)binary;
-	e->env_tf.sp=USTACKTOP;
-	
-	//printf("loading at %x\n",&(e->env_tf.pc));
-	//printf("e->env_tf.pc%x\n",e->env_tf.pc);
-
-
-LIST_INSERT_HEAD(&(env_sched_list[cur_sched]),e,env_sched_link);
-//	printf("creating\n");	
-//	printf("createing %x\n",e->env_id);
-	//	debug();
-}
-/* Overview:
- * Allocates a new env with default priority value.
- * 
- * Hints:
- *  this function warp the env_create_priority function/
- */
-
-void
-env_create(unsigned char *binary, int size)
-{
-	env_create_priority(binary,size,1);
-}
-extern void env_pop_tf(struct Trapframe *tf,unsigned long* pgdir);
-//extern void lcontext(unsigned int contxt);
-void
-env_run(struct Env *e)
-{
-	struct Trapframe *old=(struct Trapframe*)(TIMESTACK-sizeof(struct Trapframe));
-	/*Step 1: save register state of curenv. */
-    /* Hint: if there is a environment running,you should do
-    *  context switch.You can imitate env_destroy() 's behaviors.*/
-	if(curenv!=NULL){
-		bcopy((void*)old,(void*)(&(curenv->env_tf)),sizeof(struct Trapframe));
-		curenv->env_tf.pc=old->elr_el1;
-	}
-
-    /*Step 2: Set 'curenv' to the new environment. */
-	curenv=e;
-	curenv->env_runs++;
-    /*Step 3: Use lcontext() to switch to its address space. */
-	//lcontext((curenv->env_pgdir));
-    /*Step 4: Use env_pop_tf() to restore the environment's
-     * environment   registers and drop into user mode in the
-     * the   environment.
-     */
-    /* Hint: You should use GET_ENV_ASID there.Think why? */
-	//printf("curenv:%x;argument1:%x\n",curenv,&(curenv->env_tf));
-	env_pop_tf(&(curenv->env_tf),curenv->env_pgdir);//---------
-
-}
-
-void env_check()
-{
-        struct Env *temp, *pe, *pe0, *pe1, *pe2;
-        struct Env_list fl;
-        int re = 0;
- 	// should be able to allocate three envs
-	pe0 = 0;
-        pe1 = 0;
-        pe2 = 0;
-        assert(env_alloc(&pe0, 0) == 0);
-        assert(env_alloc(&pe1, 0) == 0);
-        assert(env_alloc(&pe2, 0) == 0);
-
-        assert(pe0);
-        assert(pe1 && pe1 != pe0);
-        assert(pe2 && pe2 != pe1 && pe2 != pe0);
-
- 	// temporarily steal the rest of the free envs
- 	fl = env_free_list;
-	// now this env_free list must be empty!!!!
-	LIST_INIT(&env_free_list);
-
-	// should be no free memory
-	 assert(env_alloc(&pe, 0) == -E_NO_FREE_ENV);
-
-	// recover env_free_list
-	env_free_list = fl;
-
-        printf("pe0->env_id %d\n",pe0->env_id);
-        printf("pe1->env_id %d\n",pe1->env_id);
-        printf("pe2->env_id %d\n",pe2->env_id);
-
-        assert(pe0->env_id == 2048);
-        assert(pe1->env_id == 4097);
-        assert(pe2->env_id == 6146);
-        printf("env_init() work well!\n");
-
-	 /* check envid2env work well */
-	 pe2->env_status = ENV_FREE;
-        re = envid2env(pe2->env_id, &pe, 0);
-
-        assert(pe == 0 && re == -E_BAD_ENV);
-
-        pe2->env_status = ENV_RUNNABLE;
-        re = envid2env(pe2->env_id, &pe, 0);
-
-        assert(pe->env_id == pe2->env_id &&re == 0);
-
-        temp = curenv;
-        curenv = pe0;
-        re = envid2env(pe2->env_id, &pe, 1);
-        assert(pe == 0 && re == -E_BAD_ENV);
-        curenv = temp;
-        printf("envid2env() work well!\n");
-
-	/* check env_setup_vm() work well */
-        printf("env_check() succeeded!\n");
-}

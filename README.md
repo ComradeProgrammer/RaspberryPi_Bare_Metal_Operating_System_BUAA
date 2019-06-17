@@ -1,1 +1,4 @@
-# raspi_os
+# Report of "Raspberry Pi" Challenge Mission
+## Foreword
+I am extremely sorry that I have to write this report in English although my English is poor. It is because that when I finally start to write this report, I find some problems occured in my Ubuntu18.04LTS Operating System. I cannot install any Chinese input methods on Ubuntu, and I cannot fix this problem despite of all the efforts I poured on it. Because all the codes are written in this linux environment and I need to refer to my code to write this report, it's so difficult to shut down my computer and switch between Windows and Ubuntu again and again. <br>
+**I am extermely sorry for all the troubles I caused to the teachers and TAs. Thank you for your forgiveness and understanding**
