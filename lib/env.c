@@ -135,6 +135,7 @@ env_alloc(struct Env **new, unsigned long parent_id)
 		panic("fuck,env_create_priority:env_alloc failed");
 		return;
 	}
+	/*stack*/
 	struct Page *p = NULL;
 	r=page_alloc(&p);
 	p->pp_ref++;
@@ -142,6 +143,7 @@ env_alloc(struct Env **new, unsigned long parent_id)
 		printf("env_create:page_alloc failed\n");
 		return;
 	}	
+	printf("fuck %x\n",e->env_pgdir);
 	r=page_insert(e->env_pgdir,p,USTACKTOP-BY2PG,PTE_V);
     /*Step 2: assign priority to the new env. */
 	e->env_pri=priority;
@@ -168,6 +170,7 @@ extern void env_pop_tf(struct Trapframe *tf,unsigned long* pgdir);
 
 void env_run(struct Env *e)
 {
+	extern void tlb_invalidate();
 	struct Trapframe *old=(struct Trapframe*)(TIMESTACK-sizeof(struct Trapframe));
 	/*Step 1: save register state of curenv. */
     /* Hint: if there is a environment running,you should do
@@ -186,7 +189,11 @@ void env_run(struct Env *e)
      * environment   registers and drop into user mode in the
      * the   environment.
      */
-
+	//printf("jump to %x of %x\n",curenv->env_tf.pc,curenv->env_id);
+	/*printf("pgdir %x,pmd %x\n",curenv->env_pgdir,(curenv->env_pgdir)[PUDX(USTACKTOP-BY2PG)]);
+	unsigned long* tmp=	PTE_ADDR((curenv->env_pgdir)[PUDX(USTACKTOP-BY2PG)]);
+	printf("pte%x\n",tmp[PMDX(USTACKTOP-BY2PG)]);*/
+	tlb_invalidate();
 	env_pop_tf(&(curenv->env_tf),curenv->env_pgdir);//---------
 
 }

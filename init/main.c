@@ -27,7 +27,7 @@ void main() {
      env_create(&(user_mainb),0,1);
 
 
-    enable_irq();
+    //enable_irq();
     enable_interrupt_controller();
     timer_init();
     printf(">>>timer interrupt started!\n");  

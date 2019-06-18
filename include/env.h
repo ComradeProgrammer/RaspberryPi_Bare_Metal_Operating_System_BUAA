@@ -2,7 +2,8 @@
 #define _ENV_H_
 #include<trapframe.h>
 #include<queue.h>
-#define UTOP 0x7f400000
+//#define UTOP 0x7f400000
+#define UTOP 0xe0000000
 #define LOG2NENV	10
 #define NENV (1<<10)
 #define USTACKTOP (UTOP - 2*BY2PG)
