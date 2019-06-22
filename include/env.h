@@ -51,5 +51,7 @@ void env_create_priority(unsigned char *binary, int size, int priority);
 void env_create(unsigned char *binary, int size);
 extern void env_pop_tf(struct Trapframe *tf,unsigned long* pgdir);
 void env_run(struct Env *e);
+void env_destroy(struct Env* e);
+void env_free(struct Env* e);
 void env_check();
 #endif // !_ENV_H_

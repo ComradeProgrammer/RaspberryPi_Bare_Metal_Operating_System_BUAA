@@ -8,9 +8,8 @@
 #include<env.h>
 extern void printel();
 extern void irq_vector_init();
-extern void user_maina();
-extern void user_mainb();
 extern void enable_interrupt_controller();
+extern void user_main_pingpong();
 void main() {
     //unsigned long* tmp;
     printf(">>>main.c:\tmain is start ...>>>\n");
@@ -25,8 +24,8 @@ void main() {
     page_init();
     env_init();
 
-    env_create_priority((unsigned char *)(&(user_maina)),0,1);
-    env_create_priority((unsigned char *)(&(user_mainb)),0,1);
+    env_create_priority((unsigned char *)(&(user_main_pingpong)),0,1);
+    env_create_priority((unsigned char *)(&(user_main_pingpong)),0,1);
 
     irq_vector_init();
     //enable_irq();
@@ -43,5 +42,7 @@ void main() {
         uart_send_boot(uart_getc_boot());
     }
     */
-    panic("main is over ^^^^^^^^^^^^^^^^^^^^^^^");
+    printf("\n===>Моя маленькая операционная система<===\n");
+    printf("===>За победу，вперед.Ура！<===\n\n");
+    panic("main is over,Halt!");
 }

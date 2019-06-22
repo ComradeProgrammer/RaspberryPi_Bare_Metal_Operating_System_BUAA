@@ -139,7 +139,6 @@ int env_alloc(struct Env **new, unsigned long parent_id)
 		printf("env_create:page_alloc failed\n");
 		return;
 	}	
-	printf("fuck %x\n",e->env_pgdir);
 	r=page_insert(e->env_pgdir,p,USTACKTOP-BY2PG,PTE_V);
     /*Step 2: assign priority to the new env. */
 	e->env_pri=priority;
@@ -163,19 +162,49 @@ void env_create(unsigned char *binary, int size)
 }
 
 
-/* 
+ 
 void env_free(struct Env* e){
 	unsigned long pudno,pmdno,pteno;
-	unsigned long* pud_entry,pmd_entry,pte_entry;
+	unsigned long* pud_entry,*pmd_entry;
 	printf("[%08x] free env %08x\n", curenv ? curenv->env_id : 0, e->env_id);
-	for(pudno=0;pudno<512;pudno++){
+	for(pudno=PUDX(0xc0000000);pudno<512;pudno++){
 		if(!((e->env_pgdir[pudno])&PTE_V)){
 			continue;
 		}
 		pud_entry=(unsigned long* )PTE_ADDR(e->env_pgdir[pudno]);
+		for(pmdno=0;pmdno<512;pmdno++){
+			if(!((pud_entry[pmdno])&PTE_V)){
+				continue;
+			}
+			pmd_entry=(unsigned long*)PTE_ADDR(pud_entry[pmdno]);
+			for(pteno=0;pteno<512;pteno++){
+				if(!((pmd_entry[pteno])&PTE_V)){
+					page_remove(e->env_pgdir,(pudno<<30)+(pmdno<<21)+(pteno<<12));
+				}
+			}
+			page_remove(e->env_pgdir,(unsigned long)pmd_entry);
+		}
+		page_remove(e->env_pgdir,(unsigned long)pud_entry);
 
 	}
-}*/
+	e->env_pgdir=NULL;
+	e->env_status=ENV_FREE;
+	LIST_INSERT_HEAD(&env_free_list, e, env_link);
+	LIST_REMOVE(e, env_sched_link);
+}
+extern void sched_yield();
+void env_destroy(struct Env* e){
+	env_free(e);
+	if(curenv==e){
+		curenv=NULL;
+		bcopy((void *)KERNEL_SP - sizeof(struct Trapframe),
+			  (void *)TIMESTACK - sizeof(struct Trapframe),
+			  sizeof(struct Trapframe));
+		printf("i am killed ... \n");
+		remaining_time=0;
+		sched_yield();
+	}
+}
 void env_run(struct Env *e)
 {
 	extern void tlb_invalidate();

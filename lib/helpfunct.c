@@ -1,5 +1,8 @@
 #include<uart.h>
 #include<syscall_lib.h>
+#include<mmu.h>
+#include<env.h>
+#include<pmap.h>
 void bcopy(const void *src, void *dst, unsigned long len)
 {
 	void *max;
@@ -44,15 +47,5 @@ void bzero(void *b, unsigned long len)
 	}		
 	
 }
-void user_maina(){
-    while(1){
-       syscall_putchar('1');
-		//uart_send_boot('1');
-    }
-}
-void user_mainb(){
-    while(1){
-        //uart_send_boot('2');
-		syscall_putchar('2');
-    }
-}
+
+

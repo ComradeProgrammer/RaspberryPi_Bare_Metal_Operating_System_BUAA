@@ -2,8 +2,8 @@
 #define _mmu_h
 #define NULL ((void*)0x0)
 #define BY2PG 4096
-#define MEM_SIZE 0x40000000
-#define KERNEL_BASE 0xffff000000000000
+#define MEM_SIZE (0x40000000)
+#define KERNEL_BASE (0xffff000000000000)
 //memory class
 #define PTE_NORMAL (0<<2)
 #define PTE_DEVICE (1 << 2)
@@ -56,7 +56,7 @@ extern void  boot_mmu_setup();
 #define UPAGES 0x80000000
 #define UENVS 0x81000000
 #define TIMESTACK 0x82000000
-#define KERNEL_SP 0x82000000-BY2PG
+#define KERNEL_SP (0x82000000-BY2PG)
 //now we need to configure the memory map(kernel)
 /*
 |	-----------------------------------0x82000000

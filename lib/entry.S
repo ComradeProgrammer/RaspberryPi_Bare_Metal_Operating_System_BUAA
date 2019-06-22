@@ -172,7 +172,7 @@ el0_sync:
 	
 	ldr x17,=9527
 	sub x0,x0,x17
-	cmp  x0,#1//===========1 syscalls
+	cmp  x0,#20//===========20 syscalls
 	b.ge invalid_syscall
 
 	adr x17,sys_call_table
@@ -180,8 +180,34 @@ el0_sync:
 	ldr x17,[x17]
 	blr x17
 
-	restore		
+	//restore		
 	//STI
+	ldr	 x1, [sp, #8 * 1]
+	ldp	x2, x3, [sp, #16 * 1]
+	ldp	x4, x5, [sp, #16 * 2]
+	ldp	x6, x7, [sp, #16 * 3]
+	ldp	x8, x9, [sp, #16 * 4]
+	ldp	x10, x11, [sp, #16 * 5]
+	ldp	x12, x13, [sp, #16 * 6]
+	ldp	x14, x15, [sp, #16 * 7]
+	ldp	x16, x17, [sp, #16 * 8]
+	ldp	x18, x19, [sp, #16 * 9]
+	ldp	x20, x21, [sp, #16 * 10]
+	ldp	x22, x23, [sp, #16 * 11]
+	ldp	x24, x25, [sp, #16 * 12]
+	ldp	x26, x27, [sp, #16 * 13]
+	ldp	x28, x29, [sp, #16 * 14]
+	ldr	x30, [sp, #16 * 15] 
+	
+	ldr x16,[sp,#8*31]
+	msr sp_el0,x16
+
+	ldr x16,[sp,#8*33]
+	msr spsr_el1,x16
+
+	ldr x16,[sp,#8*34]//pc
+	msr elr_el1,x16
+	add	sp, sp, #280
 	eret 
 
 

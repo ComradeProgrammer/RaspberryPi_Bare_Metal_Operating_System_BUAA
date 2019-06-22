@@ -1,6 +1,13 @@
-all: 
-	aarch64-elf-gcc user.c -nostdlib -c  -o user.o
-	aarch64-elf-gcc user_asm.S -c -o user_asm.o
-	aarch64-elf-ld -o bin.o -T user.lds user.o user_asm.o 
+INCLUDES := -I./ -I../ -I../include/
+
+%.o: %.c
+	$(CC) $(CFLAGS) $(INCLUDES) -c $<
+
+.PHONY: clean
+
+all: syscall_lib.o msyscall.o ipc.o userfunct.o
+
 clean:
-	rm *.o
+	rm -rf *~ *.o
+
+include ../include.mk
