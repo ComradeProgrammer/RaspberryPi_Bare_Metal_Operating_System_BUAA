@@ -2,7 +2,7 @@
 #define _PMAP_H_
 #include<mmu.h>
 #include<queue.h>
-#include<printf.h>
+#include<os_printf.h>
 
 
 LIST_HEAD(Page_list, Page);
@@ -38,8 +38,8 @@ extern struct Page *pages;
 
 
 void mips_detect_memory();
-static void *alloc(unsigned long n, unsigned long align, long clear);
-static unsigned long* boot_pgdir_walk(unsigned long* pud,unsigned long va,int create);
+//static void *alloc(unsigned long n, unsigned long align, long clear);
+//static unsigned long* boot_pgdir_walk(unsigned long* pud,unsigned long va,int create);
 void boot_map_segment(unsigned long* pgdir,unsigned long va,unsigned long size,
     unsigned long pa,unsigned long perm);
 void aarch64_vm_init();

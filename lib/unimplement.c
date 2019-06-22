@@ -1,4 +1,4 @@
-#include<printf.h>
+#include<os_printf.h>
 
 const char *entry_error_messages[] = {
 	"SYNC_INVALID_EL1t",

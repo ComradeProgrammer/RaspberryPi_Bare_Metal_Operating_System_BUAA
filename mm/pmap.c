@@ -1,4 +1,4 @@
-#include<printf.h>
+#include<os_printf.h>
 #include<mmu.h>
 #include<helpfunct.h>
 #include<pmap.h>
@@ -79,7 +79,7 @@ void boot_map_segment(unsigned long* pud,unsigned long va,unsigned long size,
 void aarch64_vm_init(){
     unsigned long n;
     extern unsigned long freemem;
-    unsigned long*  timestack,kernel_sp;
+    unsigned long*  timestack,*kernel_sp;
     printf("to memory %x for struct page directory.\n", _pg_dir);
 
     pages=(struct Page*)alloc(npage*sizeof(struct Page),BY2PG,1);
@@ -273,19 +273,19 @@ void page_check(){
     assert(PTE_ADDR(((unsigned long*)_pg_dir)[PUDX(0x70000000)]) == page2pa(pp1));
     assert(pp1->pp_ref == 1);
 
-    assert(page_insert(_pg_dir, pp2, 0x70000000+BY2PG, 0) == 0);
-    assert(pgdir_walk(_pg_dir,0x70000000+BY2PG,0,&tmp)==0);
+    assert(page_insert((unsigned long*)_pg_dir, pp2, 0x70000000+BY2PG, 0) == 0);
+    assert(pgdir_walk((unsigned long*)_pg_dir,0x70000000+BY2PG,0,&tmp)==0);
     assert(PTE_ADDR(*tmp)==page2pa(pp2));
     assert(pp2->pp_ref == 2);
 
     assert(page_alloc(&pp) == -E_NO_MEM);
 
-    assert(page_insert(_pg_dir, pp2, 0x70000000+BY2PG, 0) == 0);
+    assert(page_insert((unsigned long*)_pg_dir, pp2, 0x70000000+BY2PG, 0) == 0);
     assert(page_alloc(&pp) == -E_NO_MEM);
 
-    assert(page_insert(_pg_dir, pp0, 0x71000000, 0) < 0);
+    assert(page_insert((unsigned long*)_pg_dir, pp0, 0x71000000, 0) < 0);
 
-    assert(page_insert(_pg_dir, pp1, 0x70000000+BY2PG, 0) == 0);
+    assert(page_insert((unsigned long*)_pg_dir, pp1, 0x70000000+BY2PG, 0) == 0);
     page_free_list=fl;
     
 }

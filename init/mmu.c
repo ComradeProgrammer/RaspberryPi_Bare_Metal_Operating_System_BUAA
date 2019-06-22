@@ -1,6 +1,6 @@
 #include<mmu.h>
 
-#include<printf.h>
+#include<os_printf.h>
 extern volatile unsigned char _data[];
 unsigned long freemem;
 void boot_mmu_setup(){

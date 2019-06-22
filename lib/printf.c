@@ -9,7 +9,7 @@
  *
  */
 
-#include <printf.h>
+#include <os_printf.h>
 #include <print.h>
 
 extern void uart_send_boot(unsigned int c);

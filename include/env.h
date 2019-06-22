@@ -41,6 +41,15 @@ struct Env {
 };
 extern struct Env *envs;
 extern struct Env *curenv;	 
-
 LIST_HEAD(Env_list, Env);
+
+unsigned long mkenvid(struct Env *e);
+int envid2env(unsigned long  envid, struct Env **penv, int checkperm);
+void env_init(void);
+int env_alloc(struct Env **new, unsigned long parent_id);
+void env_create_priority(unsigned char *binary, int size, int priority);
+void env_create(unsigned char *binary, int size);
+extern void env_pop_tf(struct Trapframe *tf,unsigned long* pgdir);
+void env_run(struct Env *e);
+void env_check();
 #endif // !_ENV_H_

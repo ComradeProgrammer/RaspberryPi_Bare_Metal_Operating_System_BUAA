@@ -6,4 +6,6 @@
 
 #define SYS_putchar ((__SYSCALL_BASE ) + (0 ) )
 
+void invalid_syscall(long a0);
+int syscall_putchar(char ch);
 #endif

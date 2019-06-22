@@ -2,7 +2,7 @@
 #include<mmu.h>
 #include<pmap.h>
 #include<helpfunct.h>
-#include<printf.h>
+#include<os_printf.h>
 struct Env *envs = NULL;		// All environments
 struct Env *curenv = NULL;	        // the current env.
 
@@ -50,8 +50,7 @@ int envid2env(unsigned long  envid, struct Env **penv, int checkperm)
         *penv = e;
         return 0;
 }
-void
-env_init(void)
+void env_init(void)
 {
 	int i;
 	struct Env_list a,b; 
@@ -74,8 +73,7 @@ env_init(void)
 
 }
 
-static int
-env_setup_vm(struct Env *e)
+static int env_setup_vm(struct Env *e)
 {
 
 	int i, r;
@@ -98,12 +96,11 @@ env_setup_vm(struct Env *e)
 	e->env_pgdir = pgdir;
 	return 0;
 }
-int
-env_alloc(struct Env **new, unsigned long parent_id)
+int env_alloc(struct Env **new, unsigned long parent_id)
 {
-	int r;
+	//int r;
 	struct Env *e;
-    struct Page* pp;
+    //struct Page* pp;
     /*Step 1: Get a new Env from env_free_list*/
 	if((e=LIST_FIRST(&env_free_list))==NULL){
 		printf("Sorry,alloc env failed!\n");
@@ -124,7 +121,6 @@ env_alloc(struct Env **new, unsigned long parent_id)
 	return 0;
 }
 
- extern void user_main();
  void env_create_priority(unsigned char *binary, int size, int priority)
 {
     struct Env *e;
@@ -149,7 +145,7 @@ env_alloc(struct Env **new, unsigned long parent_id)
 	e->env_pri=priority;
     /*Step 3: Use load_icode() to load the named elf binary. */
 	//load_icode(e,binary,size);//----------------
-	e->env_tf.pc=(unsigned long*)binary;
+	e->env_tf.pc=(unsigned long)binary;
 	e->env_tf.sp=USTACKTOP;
 
 	LIST_INSERT_HEAD(&(env_sched_list[cur_sched]),e,env_sched_link);
@@ -166,8 +162,20 @@ void env_create(unsigned char *binary, int size)
 	env_create_priority(binary,size,1);
 }
 
-extern void env_pop_tf(struct Trapframe *tf,unsigned long* pgdir);
 
+/* 
+void env_free(struct Env* e){
+	unsigned long pudno,pmdno,pteno;
+	unsigned long* pud_entry,pmd_entry,pte_entry;
+	printf("[%08x] free env %08x\n", curenv ? curenv->env_id : 0, e->env_id);
+	for(pudno=0;pudno<512;pudno++){
+		if(!((e->env_pgdir[pudno])&PTE_V)){
+			continue;
+		}
+		pud_entry=(unsigned long* )PTE_ADDR(e->env_pgdir[pudno]);
+
+	}
+}*/
 void env_run(struct Env *e)
 {
 	extern void tlb_invalidate();
@@ -183,17 +191,12 @@ void env_run(struct Env *e)
     /*Step 2: Set 'curenv' to the new environment. */
 	curenv=e;
 	curenv->env_runs++;
-    /*Step 3: Use lcontext() to switch to its address space. */
-	//lcontext((curenv->env_pgdir));
+    
     /*Step 4: Use env_pop_tf() to restore the environment's
      * environment   registers and drop into user mode in the
      * the   environment.
      */
-	//printf("jump to %x of %x\n",curenv->env_tf.pc,curenv->env_id);
-	/*printf("pgdir %x,pmd %x\n",curenv->env_pgdir,(curenv->env_pgdir)[PUDX(USTACKTOP-BY2PG)]);
-	unsigned long* tmp=	PTE_ADDR((curenv->env_pgdir)[PUDX(USTACKTOP-BY2PG)]);
-	printf("pte%x\n",tmp[PMDX(USTACKTOP-BY2PG)]);*/
-	tlb_invalidate();
+	tlb_invalidate();//essential
 	env_pop_tf(&(curenv->env_tf),curenv->env_pgdir);//---------
 
 }
@@ -256,7 +259,7 @@ void env_check()
 	/* check env_setup_vm() work well */
         printf("env_check() succeeded!\n");
 }
-
+/* 
 static int load_icode_mapper(unsigned long va, unsigned int sgsize,
 							 unsigned char *bin, unsigned int bin_size, void *user_data)
 {
@@ -268,9 +271,9 @@ static int load_icode_mapper(unsigned long va, unsigned int sgsize,
 	int r;
 	unsigned long offset = va - ROUNDDOWN(va, BY2PG);
 	//printf("load_icode_mapper:binsize:%x,sgsize:%x,va:%x\n",bin_size,sgsize,va);
-	/*Step 1: load all content of bin into memory. */
+	//Step 1: load all content of bin into memory. 
 	for (i = 0; i < bin_size;) {
-	/* Hint: You should alloc a page and increase the reference count of it. */
+	// Hint: You should alloc a page and increase the reference count of it. 
 		r=page_alloc(&p);
 	//	p->pp_ref++;
 		if(r<0){
@@ -299,8 +302,7 @@ static int load_icode_mapper(unsigned long va, unsigned int sgsize,
 		}
 
 	}
-	/*Step 2: alloc pages to reach `sgsize` when `bin_size` < `sgsize`.
-  ¿I  * i has the value of `bin_size` now. */
+	//Step 2: alloc pages to reach `sgsize` when `bin_size` < `sgsize`. * i has the value of `bin_size` now. 
 	while (i < sgsize) {
 		r=page_alloc(&p);
 		p->pp_ref++;
@@ -321,17 +323,16 @@ static int load_icode_mapper(unsigned long va, unsigned int sgsize,
 static void
 load_icode(struct Env *e, unsigned char *binary, unsigned int size)
 {
-	/* Hint:
-	 *  You must figure out which permissions you'll need
-	 *  for the different mappings you create.
-	 *  Remember that the binary image is an a.out format image,
-	 *  which contains both text and data.
-     */
+	// Hint:
+	 //  You must figure out which permissions you'll need
+	 //  for the different mappings you create.
+	 //  Remember that the binary image is an a.out format image,
+	 //  which contains both text and data.
 	struct Page *p = NULL;
 	unsigned long entry_point;
 	unsigned long r;
         unsigned long perm;
-     /*Step 1: alloc a page. */
+     //Step 1: alloc a page. 
 	r=page_alloc(&p);
 	p->pp_ref++;
 	if(r<0){
@@ -339,21 +340,21 @@ load_icode(struct Env *e, unsigned char *binary, unsigned int size)
 		return;
 	}	
 	perm=PTE_V;
-    /*Step 2: Use appropriate perm to set initial stack for new Env. */
-    /*Hint: The user-stack should be writable? */
+    //Step 2: Use appropriate perm to set initial stack for new Env. 
+    //Hint: The user-stack should be writable? 
 	r=page_insert(e->env_pgdir,p,USTACKTOP-BY2PG,perm);
 	if(r<0){
 		printf("fuck,load_icode:page_insert failed\n");
 		return;
 	}
-    /*Step 3:load the binary by using elf loader. */
+    //Step 3:load the binary by using elf loader. 
 //	r=load_elf(binary,size,&entry_point,e,load_icode_mapper);//--------------
 	if(r<0){
 		printf("fuck,load_icode: load_elf failed\n");
 		return;	
 	}
-    /***Your Question Here***/
-    /*Step 4:Set CPU's PC register as appropriate value. */
+    //Your Question Here
+    //Step 4:Set CPU's PC register as appropriate value. 
 	e->env_tf.pc = entry_point;
 	return;
- }
+ }*/

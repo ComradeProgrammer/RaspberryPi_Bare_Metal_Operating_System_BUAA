@@ -1,6 +1,8 @@
 #include<entry.h>
-#include<printf.h>
+#include<os_printf.h>
 extern void sched_yield();
+extern void put32(long,long);
+extern void timer_init();
 void enable_interrupt_controller()
 {
 	// enable all kind of exception!

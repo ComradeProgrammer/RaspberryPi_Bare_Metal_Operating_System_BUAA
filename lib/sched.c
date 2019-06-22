@@ -1,5 +1,5 @@
 #include<env.h>
-#include<printf.h>
+#include<os_printf.h>
 int remaining_time;
 void sched_yield(){
     static int pos = -1;

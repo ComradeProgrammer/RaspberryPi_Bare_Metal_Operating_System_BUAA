@@ -151,86 +151,25 @@ error_invalid_el0_32:
 	unimplement_entry  ERROR_INVALID_EL0_32
 
 el1_irq:
-	//unimplement_entry  IRQ_INVALID_EL1t
-	/*CLI
-	saveall
-	bl	handle_irq
-	restore
-	STI
-	eret*/
-
 el0_irq:
 	CLI
 	ldr x16,=0x82000000//TIMESTACK
 	mov sp,x16
 	saveall
-	/*sub	sp, sp, #280
-	stp	x0, x1, [sp, #16 * 0]
-	stp	x2, x3, [sp, #16 * 1]
-	stp	x4, x5, [sp, #16 * 2]
-	stp	x6, x7, [sp, #16 * 3]
-	stp	x8, x9, [sp, #16 * 4]
-	stp	x10, x11, [sp, #16 * 5]
-	stp	x12, x13, [sp, #16 * 6]
-	stp	x14, x15, [sp, #16 * 7]
-	stp	x16, x17, [sp, #16 * 8]
-	stp	x18, x19, [sp, #16 * 9]
-	stp	x20, x21, [sp, #16 * 10]
-	stp	x22, x23, [sp, #16 * 11]
-	stp	x24, x25, [sp, #16 * 12]
-	stp	x26, x27, [sp, #16 * 13]
-	stp	x28, x29, [sp, #16 * 14]
-	str	x30, [sp, #16 * 15] 
-
-	mrs x16,sp_el0
-	str x16,[sp,#8*31]
-	mrs x16,elr_el1
-	str x16,[sp,#8*32]
-	str x16,[sp,#8*34]//pc
-
-	mrs x16,spsr_el1
-	str x16,[sp,#8*33]
-*/
-
+	
 	bl handle_irq
 	restore 
-	STI
+	//STI
 	eret 
 
 el0_sync:
 .extern sys_call_table
 .extern invalid_syscall
 	CLI
-	ldr x16,=0x81fff000//TIMESTACK
+	ldr x16,=0x81fff000//kernel_sp
 	mov sp,x16
 	saveall
-	/*sub	sp, sp, #280
-	stp	x0, x1, [sp, #16 * 0]
-	stp	x2, x3, [sp, #16 * 1]
-	stp	x4, x5, [sp, #16 * 2]
-	stp	x6, x7, [sp, #16 * 3]
-	stp	x8, x9, [sp, #16 * 4]
-	stp	x10, x11, [sp, #16 * 5]
-	stp	x12, x13, [sp, #16 * 6]
-	stp	x14, x15, [sp, #16 * 7]
-	stp	x16, x17, [sp, #16 * 8]
-	stp	x18, x19, [sp, #16 * 9]
-	stp	x20, x21, [sp, #16 * 10]
-	stp	x22, x23, [sp, #16 * 11]
-	stp	x24, x25, [sp, #16 * 12]
-	stp	x26, x27, [sp, #16 * 13]
-	stp	x28, x29, [sp, #16 * 14]
-	str	x30, [sp, #16 * 15] 
-
-	mrs x16,sp_el0
-	str x16,[sp,#8*31]
-	mrs x16,elr_el1
-	str x16,[sp,#8*32]
-	str x16,[sp,#8*34]//pc
-
-	mrs x16,spsr_el1
-	str x16,[sp,#8*33]*/
-
+	
 	ldr x17,=9527
 	sub x0,x0,x17
 	cmp  x0,#1//===========1 syscalls
@@ -241,32 +180,6 @@ el0_sync:
 	ldr x17,[x17]
 	blr x17
 
-	/*ldp	x0, x1, [sp, #16 * 0]
-	ldp	x2, x3, [sp, #16 * 1]
-	ldp	x4, x5, [sp, #16 * 2]
-	ldp	x6, x7, [sp, #16 * 3]
-	ldp	x8, x9, [sp, #16 * 4]
-	ldp	x10, x11, [sp, #16 * 5]
-	ldp	x12, x13, [sp, #16 * 6]
-	ldp	x14, x15, [sp, #16 * 7]
-	ldp	x16, x17, [sp, #16 * 8]
-	ldp	x18, x19, [sp, #16 * 9]
-	ldp	x20, x21, [sp, #16 * 10]
-	ldp	x22, x23, [sp, #16 * 11]
-	ldp	x24, x25, [sp, #16 * 12]
-	ldp	x26, x27, [sp, #16 * 13]
-	ldp	x28, x29, [sp, #16 * 14]
-	ldr	x30, [sp, #16 * 15] 
-	
-	ldr x16,[sp,#8*31]
-	msr sp_el0,x16
-
-	ldr x16,[sp,#8*33]
-	msr spsr_el1,x16
-
-	ldr x16,[sp,#8*34]//pc
-	msr elr_el1,x16
-	add	sp, sp, #280*/
 	restore		
 	//STI
 	eret 
