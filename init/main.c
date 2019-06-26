@@ -10,6 +10,8 @@ extern void printel();
 extern void irq_vector_init();
 extern void enable_interrupt_controller();
 extern void user_main_pingpong();
+extern void user_main_fktest();
+extern void user_main_fktest2();
 void main() {
     //unsigned long* tmp;
     printf(">>>main.c:\tmain is start ...>>>\n");
@@ -24,8 +26,8 @@ void main() {
     page_init();
     env_init();
 
-    env_create_priority((unsigned char *)(&(user_main_pingpong)),0,1);
-    env_create_priority((unsigned char *)(&(user_main_pingpong)),0,1);
+    env_create_priority((unsigned char *)(&(user_main_fktest2)),0,1);
+    //env_create_priority((unsigned char *)(&(user_main_pingpong)),0,1);
 
     irq_vector_init();
     //enable_irq();

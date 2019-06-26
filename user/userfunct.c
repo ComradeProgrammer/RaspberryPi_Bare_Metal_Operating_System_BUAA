@@ -1,6 +1,42 @@
 #include<syscall_lib.h>
 #include<os_printf.h>
 #include<ipc.h>
+void user_main_fktest2(){
+	int a=0;
+	int id=0;
+
+	if((id=fork())==0)
+	{
+		if ((id=fork())==0)
+		{
+			a+=3;
+			for(;;) printf("\t\tthis is child2 :a:%d\n",a);
+		}
+		a+=2;
+		for(;;) printf("\tthis is child :a:%d\n",a);
+	}
+	a++;
+	for(;;) printf("this is father: a:%d\n",a);
+}
+void user_main_fktest(){
+	
+	unsigned long  r=0;
+	r=fork();
+	printf("%x===\n",r);
+	if(r<0){
+		panic("failed");
+	}
+	if(r==0){
+		while(1){
+			printf("i am son\n");
+		}
+	}
+	else if(r>0){
+		while(1){
+			printf("i am father\n");
+		}
+	}
+}
 void user_main1(){
 	while(1){
 		syscall_putchar('1');

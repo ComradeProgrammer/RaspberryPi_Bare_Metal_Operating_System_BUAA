@@ -7,6 +7,7 @@
 #define LOG2NENV	10
 #define NENV (1<<10)
 #define USTACKTOP (UTOP - 2*BY2PG)
+#define UXSTACKTOP (UTOP+2*BY2PG)
 #define UTEXT 0x00400000
 #define ENVX(envid)	((envid) & (NENV - 1))
 

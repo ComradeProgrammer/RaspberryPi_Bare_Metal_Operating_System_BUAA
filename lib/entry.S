@@ -153,7 +153,7 @@ error_invalid_el0_32:
 el1_irq:
 el0_irq:
 	CLI
-	ldr x16,=0x82000000//TIMESTACK
+	ldr x16,=0x52000000//TIMESTACK
 	mov sp,x16
 	saveall
 	
@@ -166,7 +166,7 @@ el0_sync:
 .extern sys_call_table
 .extern invalid_syscall
 	CLI
-	ldr x16,=0x81fff000//kernel_sp
+	ldr x16,=0x51fff000//kernel_sp
 	mov sp,x16
 	saveall
 	

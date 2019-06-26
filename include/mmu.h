@@ -52,11 +52,15 @@ extern char _start[];
 extern char _pg_dir[]; 
 extern void enable_mmu();
 extern void  boot_mmu_setup();
-
+/* 
 #define UPAGES 0x80000000
 #define UENVS 0x81000000
 #define TIMESTACK 0x82000000
-#define KERNEL_SP (0x82000000-BY2PG)
+#define KERNEL_SP (0x82000000-BY2PG)*/
+#define UPAGES 0x50000000
+#define UENVS 0x51000000
+#define TIMESTACK 0x52000000
+#define KERNEL_SP (0x52000000-BY2PG)
 //now we need to configure the memory map(kernel)
 /*
 |	-----------------------------------0x82000000

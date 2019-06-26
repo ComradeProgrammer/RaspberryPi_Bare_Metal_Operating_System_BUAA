@@ -143,10 +143,13 @@ int sys_mem_unmap(int sysno, unsigned long envid, unsigned long va)
 int sys_env_alloc(void)
 //TODO: IMPLEMENT THIS FUNCTION WILL NOT BE USED TEMPORARILY 
 {
-    /* 
+    
 	// Your code here.
 	int r;
 	struct Env *e;
+	struct Page* pp;
+	unsigned long* newpage;
+	unsigned long currentsp;
 	// try to alloc a env
 	r=env_alloc(&e,curenv->env_id);
 	if(r<0){
@@ -155,14 +158,26 @@ int sys_env_alloc(void)
 	}
 	e->env_status=ENV_NOT_RUNNABLE;
 	bcopy(KERNEL_SP-sizeof(struct Trapframe),(void*)(&(e->env_tf)),sizeof(struct Trapframe));
-	(e->env_tf).regs[2]=0;
-	e->env_pri=curenv->env_pri;	
-	//copied from gayhub:is this necessary?
-	(e->env_tf).pc=e->env_tf.cp0_epc;
+	(e->env_tf).x[0]=0;
+	e->env_pri=curenv->env_pri;
+	//copy a stack?
+	//I have to use a fake fork
+	currentsp=ROUNDDOWN(e->env_tf.sp,BY2PG);
+	for(;currentsp<USTACKTOP;currentsp+=BY2PG){
+		r=page_alloc(&pp);
+		if(r<0){
+			printf("alloc for new stack when fork error\n");
+			return r;
+		}
+		newpage=page2pa(pp);
+		bcopy(currentsp,newpage,BY2PG);
+		r=page_insert(e->env_pgdir,pp,currentsp,PTE_V);
+	}
+	
+	e->env_status=ENV_RUNNABLE;
 
-	return e->env_id;*/
-	panic("sys_env_alloc not implemented");
-	return -1;
+
+	return e->env_id;
 }
 int sys_set_env_status(int sysno, unsigned long envid, unsigned long status)
 {
