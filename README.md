@@ -13,7 +13,7 @@ Repository of challenge task of OS Experiment of SCSE of BUAA(Summer 2019)
 
 Challenge Task: transplant the mini MIPS Operating System to the Rasperry Pi 3b with the help of simulator qemu
 
-Due to the time is extremely limited, only 4/6 of the challenge task is finished.
+Due to the extremely limited time, only 4/6 of the challenge task is finished.
 
 This project contains a bare metal aarch64 operating system ,on which virtual page memory managment, process scheduling, system calls and a fork is implemented
 
