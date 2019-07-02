@@ -11,7 +11,7 @@
 
 Repository of challenge task of OS Experiment of SCSE of BUAA(Summer 2019)
 
-Challenge Task: transplant the mini MIPS Operating System to the Rasperry Pi 3b with the help of simulator qemu
+Challenge Task: transplant the mini MIPS Operating System to the Raspberry Pi 3b with the help of simulator qemu
 
 Due to the extremely limited time, only 4/6 of the challenge task is finished.
 
